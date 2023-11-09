@@ -1,0 +1,15 @@
+-- begin_signature
+-- seven_segment_counter
+-- end_signature
+WIDTH=4;
+DEPTH=4;
+
+ADDRESS_RADIX=UNS;
+DATA_RADIX=BIN;
+
+CONTENT BEGIN
+	3 :	1111;
+	2 :	0111;
+	1 :	1010;
+	0 :	0010;
+END;
