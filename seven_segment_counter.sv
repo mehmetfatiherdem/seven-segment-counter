@@ -9,36 +9,82 @@ logic [5:0] ssv;
 input logic inc;
 input logic ss;
 
+logic [31:0] bufferInc;    
+logic stateInc;
 
-always_ff @(negedge ss)
-begin
-	if(ssv == 'hf)
-		ssv = 'h13;
-	else if(ssv == 'h13)
-		ssv = 'h19;
-	else
-		ssv = 'hf;
+logic [31:0] bufferSS;    
+logic stateSS;
+
+
+
+
+always_ff @(posedge clk1[15])
+begin 
+
+	bufferInc <= {bufferInc[30:0],inc};
+    case (stateInc)
+            1'b0:
+                begin
+                    if(&(bufferInc)== 1) // or if(buffer == 32'b1)
+                        begin
+                            data[0] <= data[0]+1;
+									 if(data[0] == 'hf && data[1] == 'hf && data[2] == 'hf && data[3] == 'hf)
+										begin
+											data[0] <= 4'h0;
+											data[1] <= 4'h0;
+											data[2] <= 4'h0;
+											data[3] <= 4'h0;
+										end
+										
+										if(data[0] == 'hf)
+											data[1] <= data[1]+1;
+										if(data[0] == 'hf && data[1] == 'hf)
+											data[2] <= data[2]+1;
+										if(data[0] == 'hf && data[1] == 'hf && data[2] == 'hf)
+											data[3] <= data[3]+1;
+                            stateInc<=1;
+                        end
+                end
+            1'b1:
+                begin
+                   if(|(bufferInc) == 0) // or if(buffer == 32'b0)
+                        stateInc<=0;
+                end
+        endcase
+
 end
 
-always_ff @(negedge inc)
-begin
-	data[0] <= data[0]+1;
-	if(data[0] == 'hf && data[1] == 'hf && data[2] == 'hf && data[3] == 'hf)
-	begin
-		data[0] <= 4'h0;
-		data[1] <= 4'h0;
-		data[2] <= 4'h0;
-		data[3] <= 4'h0;
-	end
-	
-	if(data[0] == 'hf)
-		data[1] <= data[1]+1;
-	if(data[0] == 'hf && data[1] == 'hf)
-		data[2] <= data[2]+1;
-	if(data[0] == 'hf && data[1] == 'hf && data[2] == 'hf)
-		data[3] <= data[3]+1;
+
+always_ff @(posedge clk1[15])
+begin 
+
+bufferSS <= {bufferSS[30:0],ss};
+    case (stateSS)
+            1'b0:
+                begin
+                    if(&(bufferSS)== 1) // or if(buffer == 32'b1)
+                       begin
+									if(ssv == 'hf)
+										ssv <= 'h13;
+									else if(ssv == 'h13)
+										ssv <= 'h19;
+									else
+										ssv <= 'hf;
+											
+									stateSS<=1;				
+							  end
+      
+                end
+            1'b1:
+                begin
+                   if(|(bufferSS) == 0) // or if(buffer == 32'b0)
+                        stateSS<=0;
+                end
+        endcase
+
+end
 		
-end
+
 
 always_ff @(posedge clk1[ssv])    //25 slow //19 wavy //15 perfect
 begin
@@ -68,7 +114,7 @@ always_comb
         default display=7'b1111111;
     endcase
 initial begin
-    data[0]=4'he;
+    data[0]=4'hd;
     data[1]=4'hf;
     data[2]=4'hf;
     data[3]=4'hf;
@@ -76,5 +122,11 @@ initial begin
     grounds=4'b1110;
     clk1=0;
 	 ssv=5'hf; 
+	 stateInc=1;
+    bufferInc = 32'b1;
+	 stateSS=1;
+    bufferSS = 32'b1;
+
 end
 endmodule
+
